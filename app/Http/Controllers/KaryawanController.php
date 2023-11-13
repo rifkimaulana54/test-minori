@@ -58,16 +58,16 @@ class KaryawanController extends Controller
                 'jabatan' => $request->jabatan,
             ]);
 
-            if(!empty($request->trainings))
-            {
-                foreach($request->trainings as $training)
-                {
-                    $newMapping = new MappingKaryawanTraining();
-                    $newMapping->pegawai_id    = $newKaryawan->id;
-                    $newMapping->training_id   = $training;
-                    $newMapping->save();
-                }
-            }
+            // if(!empty($request->trainings))
+            // {
+            //     foreach($request->trainings as $training)
+            //     {
+            //         $newMapping = new MappingKaryawanTraining();
+            //         $newMapping->pegawai_id    = $newKaryawan->id;
+            //         $newMapping->training_id   = $training;
+            //         $newMapping->save();
+            //     }
+            // }
 
             if ($newKaryawan) {
                 DB::commit();
@@ -127,40 +127,40 @@ class KaryawanController extends Controller
             $karyawan->jabatan = $request->jabatan;
             $karyawan->save();
 
-            if(!empty($request->trainings))
-            {
-                $exists_karyawan_ids = MappingKaryawanTraining::where('pegawai_id', $karyawan->id)
-                        ->pluck('id')->toArray();
+            // if(!empty($request->trainings))
+            // {
+            //     $exists_karyawan_ids = MappingKaryawanTraining::where('pegawai_id', $karyawan->id)
+            //             ->pluck('id')->toArray();
 
-                if(!empty($exists_karyawan_ids))
-                {
-                    $delete_karyawans = [];
+            //     if(!empty($exists_karyawan_ids))
+            //     {
+            //         $delete_karyawans = [];
 
-                    foreach ($exists_karyawan_ids as $exist_id)
-                        $delete_karyawans[] = $exist_id;
+            //         foreach ($exists_karyawan_ids as $exist_id)
+            //             $delete_karyawans[] = $exist_id;
 
-                    if(!empty($delete_karyawans))
-                    {
-                        try
-                        {
-                            MappingKaryawanTraining::destroy($delete_karyawans);
-                        }
-                        catch(\Exception $e)
-                        {
-                            DB::rollback();
-                            $data = ['status' => false, 'code' => 'EEC001', 'message' => 'A system error has occurred. please try again later. '.$e];
-                        }
-                    }
-                }
+            //         if(!empty($delete_karyawans))
+            //         {
+            //             try
+            //             {
+            //                 MappingKaryawanTraining::destroy($delete_karyawans);
+            //             }
+            //             catch(\Exception $e)
+            //             {
+            //                 DB::rollback();
+            //                 $data = ['status' => false, 'code' => 'EEC001', 'message' => 'A system error has occurred. please try again later. '.$e];
+            //             }
+            //         }
+            //     }
 
-                foreach($request->trainings as $training)
-                {
-                    $newMapping = new MappingKaryawanTraining();
-                    $newMapping->pegawai_id    = $karyawan->id;
-                    $newMapping->training_id   = $training;
-                    $newMapping->save();
-                }
-            }
+            //     foreach($request->trainings as $training)
+            //     {
+            //         $newMapping = new MappingKaryawanTraining();
+            //         $newMapping->pegawai_id    = $karyawan->id;
+            //         $newMapping->training_id   = $training;
+            //         $newMapping->save();
+            //     }
+            // }
 
             if ($karyawan) {
                 DB::commit();
@@ -208,17 +208,19 @@ class KaryawanController extends Controller
     public function getKaryawanList(Request $request)
     {
         $keyword = $request['searchkey'];
-        $searchables = ["nip", "nama_karyawan", "jabatan"];
+        $searchables = ["pegawais.nip", "pegawais.nama_karyawan", "pegawais.jabatan"];
         $pegawais = Pegawai::select('pegawais.*')
             ->leftJoin('mapping_training_pegawais', 'pegawais.id', '=', 'mapping_training_pegawais.pegawai_id')
             ->offset($request['start'])
             ->limit(($request['length'] == -1) ? Pegawai::count() : $request['length'])
-            ->when($keyword, function ($query) use ($searchables, $keyword) {
-                $query->where(function ($query) use ($searchables, $keyword) {
-                    foreach ($searchables as $column) {
-                        $query->orWhere($column, 'like', '%' . $keyword . '%');
-                    }
-                });
+            ->where(function ($query) use ($searchables, $keyword) {
+                foreach ($searchables as $column) {
+                    $query->orWhere($column, 'like', '%' . $keyword . '%');
+                }
+            })
+            ->orWhereHas('mappings.training', function ($query) use ($keyword) {
+                $query->where('jenis', 'like', '%' . $keyword . '%')
+                    ->orWhere('tgl_sertifikat', 'like', '%' . $keyword . '%');
             })
             ->groupBy('pegawais.id')
             ->with('mappings')

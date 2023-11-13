@@ -194,7 +194,7 @@ class TrainingKaryawanController extends Controller
     public function getKaryawanList(Request $request)
     {
         $keyword = $request['searchkey'];
-        $searchables = ["nip", "nama_karyawan", "jabatan"];
+        $searchables = ["pegawai_id", "training_id"];
         $pegawais = MappingKaryawanTraining::select()
             ->offset($request['start'])
             ->limit(($request['length'] == -1) ? MappingKaryawanTraining::count() : $request['length'])
@@ -211,7 +211,7 @@ class TrainingKaryawanController extends Controller
             
         $pegawaisCounter = MappingKaryawanTraining::select()
             ->when($keyword, function ($query, $keyword) {
-                return $query->where('nip', 'like', '%' . $keyword . '%');
+                return $query->where('pegawai_id', 'like', '%' . $keyword . '%');
             })
             ->count();
 
