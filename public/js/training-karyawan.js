@@ -78,7 +78,7 @@ $(function() {
                     let btnEdit = "";
                     let btnHapus = "";
                     
-                    btnEdit += '<a href="'+base_url+'/training-karyawan/'+data+'" name="btnEdit" data-id="' + data +
+                    btnEdit += '<a href="'+base_url+'/training-karyawan/'+row.pegawai.id+'" name="btnEdit" data-id="' + data +
                         '" type="button" class="btn btn-success btn-icon btn-sm btnEdit" data-toggle="tooltip" data-placement="top" title="Edit"><i class="fa fa-edit"></i></a>';
                     btnHapus += '<button id="btnHapus" name="btnHapus" data-id="' + data +
                         '" type="button" class="btn btn-danger btn-sm" data-toggle="tooltip" data-placement="top" title="Hapus"><span class="fa fa-trash"></span></button>';
